@@ -61,3 +61,30 @@ staleTime이란 데이터가 만료됐다고 판단하기 전까지 허용하는
   - 캐시가 만료되면 가비지 컬렉션이 실행되고 클라이언트는 데이터를 사용할 수 없습니다. 
 - 캐시는 가져오는 동안 표시할 백업 데이터입니다.
 
+## Prefetching
+- Prefetch
+  - 캐시에 데이터를 추가합니다.
+  - 자동으로 부실함(구성 가능)
+  - 다시 가져오는 동안 표시됩니다.
+    - 캐시가 만료되지 않은 한!
+  - 예상되는 데이터 요구 사항에 따라 프리페칭을 사용할 수 있습니다.
+    - 단순한 페이지 매김이 아닙니다!
+### [Prefetching 공식문서](https://react-query.tanstack.com/reference/QueryClient#queryclientprefetchiquery)
+
+## Mutations
+- Mutation: 서버의 데이터를 변경하는 네트워크 호출 만들기
+  - jsonplaceholder API는 서버를 변경하지 않습니다.
+  - 변화를 일으키는 메커니즘을 살펴보세요.
+- Day Spa 앱은 사용자에게 변경 사항을 보여주는 방법을 보여줍니다.
+  - 낙관적 업데이트(변화가 일어날 것이라고 가정)
+  - 서버에서 반환된 데이터로 React 쿼리 캐시 업데이트
+  - 관련 데이터를 다시 가져오는 트리거(무효화)
+
+## useMutation
+- useQuery와 유사하지만:
+  - mutate 함수를 반환합니다.
+  - 쿼리 키가 필요하지 않습니다
+  - isLoading은 있지만 isFetching은 없습니다.
+  - 기본적으로는 반환되지 않습니다(구성 가능!)
+
+### [useMutation 공식 문서](https://react-query.tanstack.com/guides/mutations)

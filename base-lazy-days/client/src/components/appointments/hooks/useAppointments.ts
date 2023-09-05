@@ -1,6 +1,7 @@
 // @ts-nocheck
 import dayjs from 'dayjs';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from 'react-query';
 
 import { axiosInstance } from '../../../axiosInstance';
 import { queryKeys } from '../../../react-query/constants';
@@ -27,50 +28,66 @@ interface UseAppointments {
   setShowAll: Dispatch<SetStateAction<boolean>>;
 }
 
-// The purpose of this hook:
-//   1. track the current month/year (aka monthYear) selected by the user
-//     1a. provide a way to update state
-//   2. return the appointments for that particular monthYear
-//     2a. return in AppointmentDateMap format (appointment arrays indexed by day of month)
-//     2b. prefetch the appointments for adjacent monthYears
-//   3. track the state of the filter (all appointments / available appointments)
-//     3a. return the only the applicable appointments for the current monthYear
+// 이 hook의 목적:
+// 1. 사용자가 선택한 현재 월/연도(일명 MonthYear)를 추적합니다.
+// 1a. 상태를 업데이트하는 방법 제공
+// 2. 특정 MonthYear에 대한 약속을 반환합니다.
+// 2a. AppointmentDateMap 형식으로 반환(일별로 인덱싱된 약속 배열)
+// 2b. 인접한 달의 약속을 미리 가져옵니다.
+// 3. 필터 상태 추적(모든 약속 / 사용 가능한 약속)
+// 3a. 이번 달 연도에 적용 가능한 약속만 반환합니다.
 export function useAppointments(): UseAppointments {
   /** ****************** START 1: monthYear state *********************** */
-  // get the monthYear for the current date (for default monthYear state)
+  // 현재 날짜의 MonthYear를 가져옵니다(기본 MonthYear 상태의 경우).
   const currentMonthYear = getMonthYearDetails(dayjs());
 
-  // state to track current monthYear chosen by user
-  // state value is returned in hook return object
+  // 사용자가 선택한 이번 달 연도를 추적하는 상태
+  // 상태 값은 후크 반환 개체에 반환됩니다.
   const [monthYear, setMonthYear] = useState(currentMonthYear);
 
-  // setter to update monthYear obj in state when user changes month in view,
-  // returned in hook return object
+  // 사용자가 보기에서 월을 변경할 때 상태의 MonthYear obj를 업데이트하도록 설정자,
+  // 후크 반환 객체로 반환됨
   function updateMonthYear(monthIncrement: number): void {
     setMonthYear((prevData) => getNewMonthYear(prevData, monthIncrement));
   }
   /** ****************** END 1: monthYear state ************************* */
   /** ****************** START 2: filter appointments  ****************** */
-  // State and functions for filtering appointments to show all or only available
+  // 모든 약속 또는 가능한 약속만 표시하도록 필터링하는 상태 및 함수
   const [showAll, setShowAll] = useState(false);
 
-  // We will need imported function getAvailableAppointments here
-  // We need the user to pass to getAvailableAppointments so we can show
-  //   appointments that the logged-in user has reserved (in white)
+  // 여기에 가져온 함수 getAvailableAppointments가 필요합니다.
+  // 표시할 수 있도록 사용자가 getAvailableAppointments를 전달해야 합니다.
+  // 로그인한 사용자가 예약한 약속(흰색)
   const { user } = useUser();
 
   /** ****************** END 2: filter appointments  ******************** */
   /** ****************** START 3: useQuery  ***************************** */
-  // useQuery call for appointments for the current monthYear
+  // 이번 달의 약속에 대한 쿼리 호출을 사용합니다.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    // assume increment of one month
+    const nextMonthYear = getNewMonthYear(monthYear, 1);
+    queryClient.prefetchQuery(
+      [queryKeys.appointments, nextMonthYear.year, nextMonthYear.month],
+      () => getAppointments(nextMonthYear.year, nextMonthYear.month),
+    );
+  }, [queryClient, monthYear]);
 
-  // TODO: update with useQuery!
-  // Notes:
-  //    1. appointments is an AppointmentDateMap (object with days of month
-  //       as properties, and arrays of appointments for that day as values)
+  // 노트:
+  // 1. 약속은 AppointmentDateMap입니다(월의 날짜가 포함된 개체).
+  // 속성으로, 해당 날짜의 약속 배열을 값으로)
   //
-  //    2. The getAppointments query function needs monthYear.year and
-  //       monthYear.month
-  const appointments = {};
+  // 2. getAppointments 쿼리 함수에는 MonthYear.year 및
+  // 월년.월
+  const fallback = {};
+  const { data: appointments = fallback } = useQuery(
+    [queryKeys.appointments, monthYear.year, monthYear.month],
+    () => getAppointments(monthYear.year, monthYear.month),
+    // keepPreviousData는 여기서 적합하지 않음
+    // {
+    //   keepPreviousData: true, // 쿼리 키가 변경될 때까지 이전의 모든 데이터가 그대로 유지된다.
+    // },
+  );
 
   /** ****************** END 3: useQuery  ******************************* */
 

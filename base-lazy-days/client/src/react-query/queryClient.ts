@@ -1,5 +1,5 @@
 import { createStandaloneToast } from '@chakra-ui/react';
-import { QueryCache, QueryClient } from 'react-query';
+import { QueryClient } from 'react-query';
 
 import { theme } from '../theme';
 
@@ -16,7 +16,14 @@ function queryErrorHandler(error: unknown): void {
 }
 
 export const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: queryErrorHandler,
-  }),
+  defaultOptions: {
+    queries: {
+      onError: queryErrorHandler,
+      staleTime: 600000, // 10 minutes
+      cacheTime: 900000, // 15 minutes (doesn't make sense for staleTime to exceed cacheTime)
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    },
+  },
 });

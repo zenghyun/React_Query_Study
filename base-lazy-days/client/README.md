@@ -148,3 +148,77 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
   - 페이지(월/연도) 업데이트
   - keepPreviousData는 배경이 변경되지 않는 경우에만 유용합니다.
 - 키를 종속성 배열로 처리
+
+## Filtering with the select option 
+- 사용자가 참석할 수 없는 appointments은을 필터링할 수 있도록 허용
+- 선택 옵션이 이를 수행하는 가장 좋은 방법인 이유는 무엇입니까?
+  - 불필요한 계산을 줄이기 위해 React Query를 메모합니다.
+  - 기술 세부사항:
+    - 선택 기능의 삼중 동일 비교
+    - 데이터가 변경되고 함수가 변경된 경우에만 실행됩니다.
+  - 안정적인 함수가 필요합니다(익명 함수의 경우 useCallback).
+  - reference: [https://tkdodo.eu/blog/react-query-data-transformations](https://tkdodo.eu/blog/react-query-data-transformations)
+- 후크에 포함된 상태(예: MonthYear)
+- 유틸리티의 필터 기능: getAvailableAppointments
+
+## Code Quiz! Selector for useStaff
+- 특정 치료를 위해 AllStaff 페이지의 라디오 버튼을 활성화합니다.
+- useStaff에서 추적된 상태(getter/setter 반환)
+- utils.js에 미리 작성된 선택기 기능: filterByTreatment
+  - 익명 함수로 선택 콜백을 만들어야 합니다(필터 매개변수 필요).
+  - (unfilteredStaff) => filterByTreatment(unfilteredStaff, 필터)
+  - 캐싱 이점을 위해 사용 중인 콜백 래핑
+- 모두 선택 시 필터 기능을 사용하지 마세요.
+  - useAppointments의 경우 showAll = true와 같습니다.
+
+## Re-fetching! Why? When? 
+- 다시 가져오기를 통해 오래된 데이터가 서버에서 업데이트되도록 보장
+  - 페이지를 떠나서 다시 집중할 때 표시됩니다.
+- 다음과 같은 경우 오래된 쿼리가 백그라운드에서 자동으로 다시 가져옵니다. ( 사용자 조치가 없더라도 데이터가 업데이트 되는 경우 )
+  - 쿼리 마운트의 새 인스턴스
+  - useQuery 호출이 있는 반응 구성 요소가 마운트될 때마다
+  - 창의 초점이 다시 맞춰졌습니다.
+  - 네트워크가 다시 연결되었습니다
+  - 구성된 refetchInterval이 만료되었습니다.
+    - 자동 폴링
+
+## Re-fetching! How? 
+- 전역 또는 쿼리별 옵션으로 제어:
+  - refetchOnMount, refetchOnWindowFocus, refetchOnReconnect, refetchInterval
+  - **refetchInterval을 제외한 나머지 3개는 default value : true** 
+- 또는 명령적으로: useQuery 반환 객체의 refetch 함수
+- reference: [https://react-query.tanstack.com/guides/important-defaults](https://react-query.tanstack.com/guides/important-defaults)
+### Suppressing Re-fetch
+- 어떻게?
+  -stale time 증가
+  - refetchOnMount / refetchOnWindowFocus / refetchOnReconnect 끄기
+- 미션 크리티컬 데이터가 아닌 아주 최근에 변경된 데이터에만 해당
+  - treatments 또는 staff(확실히 appointments은 아닙니다!)
+- 물어보세요: 그만한 가치가 있나요?
+- 이 인용문을 기억하세요. '데이터가 어떻게 항상 실시간일 수 있습니까?'라고 묻는 것이 '왜 데이터를 업데이트할 수 없나요?'보다 낫습니다.
+
+## Update Global Settings 
+- 전역 기본 옵션과 개별 쿼리 옵션 비교
+- 여기에서는 appointments을 제외한 모든 항목에 대한 설정을 원합니다.
+  - mutation 후 사용자 프로필 및 사용자 appointments은 무효화됨
+  - appointments에 특별한 설정이 적용됩니다(간격에 따른 자동 다시 가져오기 포함).
+- src/react-query/queryClient.ts의 전역 옵션
+
+## Polling / Auto Re-fetching 
+- appointments은 treatments와 staff의 반대입니다.
+  - 사용자가 아무런 조치를 취하지 않아도 업데이트가 되기를 원함
+  - appointments은은 서버에서 변경될 수 있으므로 최신 상태를 유지하고 싶습니다.
+- staleTime, cacheTime, refetchOn*에 대한 기본값을 재정의합니다.
+- 쿼리를 사용하려면 refetchInterval 옵션을 사용하세요.
+  - 참조: [https://react-query.tanstack.com/examples/auto-refetching](https://react-query.tanstack.com/examples/auto-refetching)
+- userAppointments는 어떻습니까?
+  - 기본값으로 해도 되나요?
+  - 예, "from underneath us" 업데이트되지 않기 때문입니다.
+  - 클라이언트는 로그인한 사용자 appointments에 변경 사항이 있는지 알 수 있습니다.
+  - 서버에서 변경될 수 있는 다른 appointments은 있습니다.
+
+## Summary
+- 필터링 옵션 선택
+  - 캐싱을 활용하는 안정적인 기능
+- 옵션으로 다시 가져오기 억제
+- 간격을 두고 폴링/다시 가져오기

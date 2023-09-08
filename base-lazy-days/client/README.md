@@ -81,7 +81,9 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
 - 오류 처리를 중앙 집중화
   - 기본 onError 콜백
 
-## Prefetch and Pagination 
+<br>
+
+# Prefetch and Pagination 
 
 ### Options for pre-populating data 
 
@@ -149,7 +151,9 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
   - keepPreviousData는 배경이 변경되지 않는 경우에만 유용합니다.
 - 키를 종속성 배열로 처리
 
-## Filtering with the select option 
+<br>
+
+# Filtering with the select option 
 - 사용자가 참석할 수 없는 appointments은을 필터링할 수 있도록 허용
 - 선택 옵션이 이를 수행하는 가장 좋은 방법인 이유는 무엇입니까?
   - 불필요한 계산을 줄이기 위해 React Query를 메모합니다.
@@ -222,3 +226,92 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
   - 캐싱을 활용하는 안정적인 기능
 - 옵션으로 다시 가져오기 억제
 - 간격을 두고 폴링/다시 가져오기
+
+<br>
+
+# React Query and Auth
+- useAuth 또는 useQuery 중 누가 사용자 데이터를 "소유"해야 합니까?
+  - useAuth가 useQuery를 호출해야 할까요, 아니면 직접 axios 호출을 해야 할까요?
+  - useAuth에는 데이터를 저장하는 공급자가 있어야 합니까, 아니면 React Query 캐시에 사용자 데이터를 저장해야 합니까?
+
+## Separation of Concerns
+- React Query: 클라이언트의 서버 상태에 대한 캐시 제공
+- useAuth: 로그인/가입/로그아웃 기능을 제공합니다.
+- 결론: React Query는 (useUser를 통해) 데이터를 저장합니다.
+- useAuth는 서버 호출에서 사용자 데이터를 수집합니다(캐시에 추가).
+
+## Role of useUser
+- React Query에서 사용자 데이터를 반환합니다.
+  - 초기화 시 localStorage에서 로드
+- useQuery를 통해 서버에서 사용자 데이터를 최신 상태로 유지
+  - 로그인한 사용자가 없는 경우 쿼리 함수는 null을 반환합니다.
+- 사용자가 업데이트할 때마다(로그인/로그아웃/mutation)
+  - setQueryData를 통해 React 쿼리 캐시 업데이트
+  - onSuccess 콜백에서 localStorage 업데이트
+    - onSuccess는 다음 이후에 실행됩니다.
+      - setQueryData
+      - 쿼리 기능
+
+## Why not store user data in Auth provider? (굳이?)
+- 가능하기는 합니다만, 
+- 단점은 복잡성이 추가됨
+  - 별도의 Provider(Context) 생성/유지관리
+  - React Query 캐시와 전용 인증 공급자의 중복 데이터
+- 새로 시작: 인증 제공자를 버리고 React 쿼리 캐시에 저장
+- 레거시 프로젝트: 둘 다 유지하는 것이 더 편리할 수 있습니다.
+
+## JWT Authentication 
+- 이 앱은 JWT(JSON Web Token) 인증을 사용합니다.
+  - Firebase / Amplify / 기타 클라우드 기반 인증을 사용할 수 있습니다.
+- JWT
+  - 서버는 성공적인 로그인(또는 사용자 생성) 시 토큰을 보냅니다.
+  - 클라이언트는 신원 증명으로 요청과 함께 헤더에 토큰을 보냅니다.
+- 보안
+  - 토큰에는 사용자 이름 및 사용자 ID와 같은 인코딩된 정보가 포함되어 있습니다.
+  - 서버에서 디코딩 및 일치 
+- 이 앱에서는 JWT가 사용자 개체에 저장됩니다.
+  - localStorage에 지속됨
+  - 인증 시스템은 세션 간에 데이터를 유지하기 위해 다른 방법을 사용할 수 있습니다.
+- 클라이언트와 서버에 JWT가 이미 설정되어 있습니다.
+
+## Set query cache values in useAuth 
+- 인증 제공자 역할을 하는 React Query
+- 사용자 queryClient.setQueryData
+- updateUser 및 clearUser에 추가
+  - useAuth는 이미 이러한 기능을 호출합니다.
+
+## Setting lnitial Value 
+- 초기화 데이터 값을 사용하여 쿼리 사용
+  - 캐시에 초기값을 추가하고 싶을 때 사용
+  - 자리 표시자의 경우 placeholderData 또는 구조화되지 않은 기본 값을 사용하세요.
+- 초기값은 localStorage에서 옵니다.
+
+- https://react-query.tanstack.com/guilds/initial-query-data#using-initialdata-to-prepopulate-aquery
+
+## Dependent Queries 
+- 사용자 약속에 대한 별도 쿼리
+  - 사용자 데이터보다 더 자주 변경됩니다.
+  - 약간 인위적이지만 종속 쿼리를 보여주기에 좋습니다.
+- useUserAppointments에서 useQuery를 호출합니다.
+  - 지금은 주요 사용자 약속을 사용하세요.
+  - 쿼리 키 접두사를 보기 시작하면 변경됩니다.
+- 사용자의 진실 여부에 따라 쿼리를 작성합니다.
+  - 참조: https://react-query.tanstack.com/guides/dependent-queries
+
+## Remove userAppointments Query 
+- 로그아웃 시 사용자 약속 데이터가 지워졌는지 확인하세요.
+  - queryClient.removeQueries
+- 사용자 데이터에 대해 RemoveQueries를 사용하지 않는 이유는 무엇입니까?
+  - setQueryData는 onSuccess를 호출합니다(removeQueries는 호출하지 않음).
+- userAppointments에는 useUser에 대한 onSuccess가 필요하지 않습니다.
+
+## Summary 
+- useQuery는 사용자 데이터를 캐시하고 서버에서 새로 고칩니다.
+  - 서버에서 새로 고치는 것이 돌연변이에 중요합니다.
+
+- useUser는 쿼리 캐시 및 localStorage에서 사용자 데이터를 관리합니다.
+  - 로그인/로그아웃 시 setQueryData를 사용하여 쿼리 캐시 설정
+  - onSuccess 콜백은 localStorage를 관리합니다.
+
+- 사용자 상태에 따른 사용자 약속 쿼리
+  - RemoveQueries를 사용하여 로그아웃 시 데이터 제거

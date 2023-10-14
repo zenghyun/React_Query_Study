@@ -1,5 +1,5 @@
 import InfiniteScroll from "react-infinite-scroller";
-import { useInfiniteQuery } from "react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Person } from "./Person";
 
 const initialUrl = "https://swapi.dev/api/people/";
@@ -11,7 +11,7 @@ const fetchUrl = async (url) => {
 export function InfinitePeople() {
   const { data, fetchNextPage, hasNextPage, isLoading, isFetching, isError, error } =
     useInfiniteQuery(
-      "sw-people",
+      ["sw-people"],
       ({ pageParam = initialUrl }) => fetchUrl(pageParam),
       {
         getNextPageParam: (lastPage) => lastPage.next || undefined,

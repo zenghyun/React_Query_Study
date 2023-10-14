@@ -315,3 +315,37 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
 
 - 사용자 상태에 따른 사용자 약속 쿼리
   - RemoveQueries를 사용하여 로그아웃 시 데이터 제거
+
+<br>
+
+# React Query Mutations
+- Blog-em lpsum 이후로 mutation이 다시 도입되었습니다.
+- 여기서 좀 더 현실적으로 활용해보세요. (서버 업데이트 예정!)
+  - 데이터가 캐시에서 제거되도록 변형에 대한 쿼리를 무효화합니다.
+  - 돌연변이 후 서버에서 반환된 데이터로 캐시를 업데이트합니다.
+  - 낙관적 업데이트(변이가 성공할 것이라고 가정하고 실패하면 롤백)
+
+## Global Fetching / Error
+- 쿼리와 매우 유사
+- 오류
+  - 쿼리 클라이언트 defaultOptions의 mutations 속성에 onError 콜백을 설정합니다.
+
+- 로딩 표시기
+  - useIsMutating은 useIsFetching과 유사합니다.
+  - isMutating에 표시할 로드 구성요소 업데이트
+
+
+## useMutation 
+- useQuery와 매우 유사합니다!
+- 차이점
+  - 캐시 데이터 없음
+  - 재시도 없음
+  - 다시 가져오지 않음
+  - isLoading 대 isFetching 없음
+  - 실제로 mutation을 실행하는 mutate 함수를 반환합니다.
+  - onMutate 콜백(낙관적 쿼리에 유용합니다!)
+- 참조
+  - https://react-query.tanstack.com/reference/useMutation
+  - https://react-query.tanstack.com/guides/mutations
+
+

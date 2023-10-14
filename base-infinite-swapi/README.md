@@ -86,15 +86,15 @@ This app uses the [Star Wars API](https://swapi.dev/) server.
 - Data in data.pages[x].results
 
 ### Bi-directional Scrolling
-- Bi-directional is useful when starting in the middle 
-- All next methods and properties have equivalent for previous 
+- 양방향은 중간에 시작할 때 유용합니다.
+- 모든 다음 메서드와 속성은 이전 메서드와 동일합니다.
 
 ### Infinite Scroll Summary 
-- React Query manages
-  - pageParam for next page to be fetched 
-    - getNextPageParam option
-    - could be from lastPage, or allPages 
+- React 쿼리가 관리합니다.
+  - 가져올 다음 페이지에 대한 pageParam
+    - getNextPageParam 옵션
+    - lastPage 또는 allPages에서 올 수 있음
   - hasNextPage
-    - boolean indicating whether pageParam is undefinedx 
-  - Component handles calling fetchNextPage
-    - use hasNextPage value to determine when to stop
+    - pageParam이 정의되지 않았는지 여부를 나타내는 부울 x
+  - 구성요소는 fetchNextPage 호출을 처리합니다.
+    - hasNextPage 값을 사용하여 중지 시점을 결정합니다.

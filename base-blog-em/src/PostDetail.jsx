@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 async function fetchComments(postId) {
   const response = await fetch(
@@ -25,9 +25,10 @@ async function updatePost(postId) {
 
 export function PostDetail({ post }) {
   // replace with useQuery
-  const { data, isError, isLoading, error } = useQuery(
-    ["postComment", post.id],
-    () => fetchComments(post.id)
+  const { data, isError, isLoading, error } = useQuery({
+    queryKey: ["postCommnet", post.id],
+    queryFn: () => fetchComments(post.id),
+  }
   );
 
   const deleteMutation = useMutation((postId) => deletePost(postId));

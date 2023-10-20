@@ -38,7 +38,7 @@ export const RQSuperHeroesPage = () => {
 
  /**
   * isLoading && isFetching 해야하는 이유 
-   https://despiteallthat.tistory.com/307 
+   https://despiteallthat.tistory.com/307  
   * 
   */
   if (isLoading && isFetching) {

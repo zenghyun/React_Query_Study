@@ -26,7 +26,9 @@ async function updatePost(postId) {
 export function PostDetail({ post }) {
   // replace with useQuery
   const { data, isError, isLoading, error } = useQuery({
-    queryKey: ["postCommnet", post.id],
+    queryKey: ["postComment", post.id],
+    // Every query don't uses the same key (comments)
+    // queryKey를 구분하기 위해 배열 뒤에 구분할 index를 넣어줘야 한다.
     queryFn: () => fetchComments(post.id),
   }
   );

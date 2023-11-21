@@ -13,6 +13,9 @@ export function App(): ReactElement {
   return (
     <ChakraProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
+        {/* 
+            don't show when process.env.NODE_ENV === 'production' 
+          */}
         <Navbar />
         <Loading />
         <Routes />

@@ -14,7 +14,7 @@ async function fetchPosts() {
 export function Posts() {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
-
+  console.log("clone test");
   // replace with useQuery
   const { data, isError, error, isLoading } = useQuery("posts", fetchPosts);
 

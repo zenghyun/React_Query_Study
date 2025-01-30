@@ -409,5 +409,85 @@ Run `npm start`. The app will be found at [http://localhost:3000]. You will prob
   - Increase stale time
   - turn off refetchOnMount / refetchOnWindowFocus / refetchOnReconnect
 - Only for very rarely changed, not mission-critical data
-- 리패치를 실행하는 유일한 경우는 캐시가 비어있을 때임 (gcTime이 0일 때)
--
+- 리패치를 실행하는 유일한 경 우는 캐시가 비어있을 때임 (gcTime이 0일 때)
+
+### useMutation
+
+- very similar to useQuery!
+- Differences
+  - no query key
+  - no cache data
+  - no retries
+  - no refetch
+  - no isLoading vs isFetching
+  - return mutate function which actually runs mutation
+  - onMutation callback (useful for optimistic queries!)
+
+### Optimistic Updates
+
+- update UI before response from the server
+  - you're "optimistic" that the mutation will work
+- Note: there's also an option to update the cache
+  - more complicated, but more control
+    - need to cancel queries in progress so old server data won't overwrite update
+    - need to save data for possible rollback
+    - need to handle rollback explicitly if update fails
+  - useful if you're showing the data in multiple components
+
+### Optimistic Updates: UI
+
+- React query makes this pretty easy
+- get mutation data with useMutationState
+  - mutation key identifies which mutation data
+  - display this data on the page while mutation is pending
+- Invalidate query after mutation is settled
+  - if the mutation failed, data will 'roll back' - i.e., it will be replaced with old data from server
+    `
+
+```javascript
+// somewhere in your app
+const { mutate } = useMutation({
+  mutationFn: (newTodo: string) => axios.post('/api/data', { text: newTodo }),
+  onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+  mutationKey: ['addTodo'],
+});
+
+// access variables somewhere else
+const variables =
+  useMutationState <
+  string >
+  {
+    filters: { mutationKey: ['addTodo'], status: 'pending' },
+    select: (mutation) => mutation.state.variables,
+  };
+
+const queryClient = useQueryClient();
+
+useMutation({
+  mutationFn: updateTodo,
+  // When mutate is called:
+  onMutate: async (newTodo) => {
+    // Cancel any outgoing refetches
+    // (so they don't overwrite our optimistic update)
+    await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+    // Snapshot the previous value
+    const previousTodos = queryClient.getQueryData(['todos']);
+
+    // Optimistically update to the new value
+    queryClient.setQueryData(['todos'], (old) => [...old, newTodo]);
+
+    // Return a context object with the snapshotted value
+    return { previousTodos };
+  },
+  // If the mutation fails,
+  // use the context returned from onMutate to roll back
+  onError: (err, newTodo, context) => {
+    queryClient.setQueryData(['todos'], context.previousTodos);
+  },
+  // Always refetch after error or success:
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['todos'] });
+  },
+});
+```
